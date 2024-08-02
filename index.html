@@ -25,9 +25,9 @@
 </head>
 <body>
     <div class="counter-container">
-        <h1>Married Since</h1>
-        <p id="counter"></p>
-        <p id="total-days"></p>
+        <h3>Married Since</h3>
+        <b></b><p id="counter"></p>
+        <p id="total-days"></p></b>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
@@ -64,7 +64,7 @@
             const totalDaysElement = document.getElementById('total-days');
             const timeSince = calculateTimeSince(marriageDate);
             counterElement.innerText = timeSince.formatted;
-            totalDaysElement.innerText = `Or ${timeSince.totalDays} days`;
+            totalDaysElement.innerText = `${timeSince.totalDays} days`;
         }
 
         updateCounter();
