@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marriage Date Counter</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .counter-container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="counter-container">
+        <h1>Married Since</h1>
+        <p id="counter"></p>
+        <p id="total-days"></p>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        function calculateTimeSince(date) {
+            const now = new Date();
+            const pastDate = new Date(date);
+            const diffInMs = now - pastDate;
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+            
+            const months = Math.floor(diffInDays / 30);
+            const days = diffInDays % 30;
+            
+            let result = '';
+            if (months > 0) {
+                result = `${months} month${months > 1 ? 's' : ''} ${days} day${days > 1 ? 's' : ''}`;
+            } else {
+                result = `${diffInDays} day${diffInDays > 1 ? 's' : ''}`;
+            }
+            return {
+                formatted: result,
+                totalDays: diffInDays
+            };
+        }
+
+        function updateCounter() {
+            const marriageDate = '2024-06-27';
+            const counterElement = document.getElementById('counter');
+            const totalDaysElement = document.getElementById('total-days');
+            const timeSince = calculateTimeSince(marriageDate);
+            counterElement.innerText = timeSince.formatted;
+            totalDaysElement.innerText = `Or ${timeSince.totalDays} days`;
+        }
+
+        updateCounter();
+        setInterval(updateCounter, 1000 * 60); // Update every minute
+    </script>
+</body>
+</html>
