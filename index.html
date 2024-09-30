@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-P6H4R6PN');</script>
-    <!-- End Google Tag Manager -->
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Married Since</title>
+    <title>Married Since - Visits Tracker</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -37,11 +29,7 @@
     </style>
 </head>
 <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P6H4R6PN"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    
+
     <div class="counter-container">
         <h3>Married Since</h3>
         <b><p id="counter"></p>
@@ -107,10 +95,13 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <!-- Custom JavaScript -->
     <script>
-        let visits = [];
         const marriageDate = '2024-06-27';
+        let visits = [];
+        const apiUrl = "https://api.jsonbin.io/v3/b/66fa41cbe41b4d34e43a7307";
+        const apiKey = "$2a$10$JYyw2jAOt.GPqVr1UoD97ebyz5ejpuLmkvMvrpXzg6xQuawpPiTsW";
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -146,14 +137,32 @@
             totalDaysElement.innerText = `${timeSince.totalDays} days`;
         }
 
-        function loadVisits() {
-            fetch('visits.json')
-                .then(response => response.json())
-                .then(data => {
-                    visits = data;
+        function saveVisitsToJSONBin() {
+            let req = new XMLHttpRequest();
+            req.onreadystatechange = () => {
+                if (req.readyState === XMLHttpRequest.DONE) {
+                    console.log('Data Saved:', req.responseText);
+                }
+            };
+            req.open("PUT", apiUrl, true);
+            req.setRequestHeader("Content-Type", "application/json");
+            req.setRequestHeader("X-Master-Key", apiKey);
+            req.send(JSON.stringify({ visits }));
+        }
+
+        function loadVisitsFromJSONBin() {
+            let req = new XMLHttpRequest();
+            req.onreadystatechange = () => {
+                if (req.readyState === XMLHttpRequest.DONE) {
+                    const response = JSON.parse(req.responseText);
+                    visits = response.record.visits || [];
                     renderVisits();
-                })
-                .catch(error => console.error('Error loading visits:', error));
+                    console.log('Data Loaded:', visits);
+                }
+            };
+            req.open("GET", apiUrl + "/latest", true);
+            req.setRequestHeader("X-Master-Key", apiKey);
+            req.send();
         }
 
         function renderVisits() {
@@ -194,7 +203,7 @@
             toggleVisitsBtn.addEventListener('click', function() {
                 if (visitsTable.style.display === 'none') {
                     visitsTable.style.display = 'block';
-                    loadVisits();
+                    loadVisitsFromJSONBin();
                 } else {
                     visitsTable.style.display = 'none';
                 }
@@ -212,18 +221,17 @@
                 const endDate = document.getElementById('endDate').value;
                 const notes = document.getElementById('notes').value;
 
-                if (startDate && endDate) {
-                    visits.push({ startDate, endDate, notes });
-                    renderVisits();
-                    $('#addVisitModal').modal('hide');
-                    document.getElementById('addVisitForm').reset();
-                }
+                visits.push({ startDate, endDate, notes });
+                $('#addVisitModal').modal('hide');
+                saveVisitsToJSONBin();
+                renderVisits();
             });
 
             document.getElementById('visitsBody').addEventListener('click', function(e) {
                 if (e.target.classList.contains('delete-visit')) {
                     const index = e.target.getAttribute('data-index');
                     visits.splice(index, 1);
+                    saveVisitsToJSONBin();
                     renderVisits();
                 }
             });
