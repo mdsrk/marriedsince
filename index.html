@@ -58,11 +58,13 @@
                     <th>End Date</th>
                     <th>Duration</th>
                     <th>Notes</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="visitsBody">
             </tbody>
         </table>
+        <p id="daysSpentTogether"></p>
     </div>
 
     <button id="addVisit" class="btn btn-success mt-3">Add New Visit</button>
@@ -107,6 +109,14 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <!-- Custom JavaScript -->
     <script>
+        let visits = [];
+        const marriageDate = '2024-06-27';
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+        }
+
         function calculateTimeSince(date) {
             const now = new Date();
             const pastDate = new Date(date);
@@ -129,7 +139,6 @@
         }
 
         function updateCounter() {
-            const marriageDate = '2024-06-27';
             const counterElement = document.getElementById('counter');
             const totalDaysElement = document.getElementById('total-days');
             const timeSince = calculateTimeSince(marriageDate);
@@ -141,21 +150,39 @@
             fetch('visits.json')
                 .then(response => response.json())
                 .then(data => {
-                    const visitsBody = document.getElementById('visitsBody');
-                    visitsBody.innerHTML = '';
-                    data.forEach(visit => {
-                        const row = document.createElement('tr');
-                        const duration = calculateTimeSince(visit.startDate).totalDays;
-                        row.innerHTML = `
-                            <td>${visit.startDate}</td>
-                            <td>${visit.endDate}</td>
-                            <td>${duration} days</td>
-                            <td>${visit.notes}</td>
-                        `;
-                        visitsBody.appendChild(row);
-                    });
+                    visits = data;
+                    renderVisits();
                 })
                 .catch(error => console.error('Error loading visits:', error));
+        }
+
+        function renderVisits() {
+            const visitsBody = document.getElementById('visitsBody');
+            visitsBody.innerHTML = '';
+            visits.forEach((visit, index) => {
+                const row = document.createElement('tr');
+                const duration = calculateTimeSince(visit.startDate).totalDays;
+                row.innerHTML = `
+                    <td>${formatDate(visit.startDate)}</td>
+                    <td>${formatDate(visit.endDate)}</td>
+                    <td>${duration} days</td>
+                    <td>${visit.notes}</td>
+                    <td><button class="btn btn-danger btn-sm delete-visit" data-index="${index}">Delete</button></td>
+                `;
+                visitsBody.appendChild(row);
+            });
+            updateDaysSpentTogether();
+        }
+
+        function updateDaysSpentTogether() {
+            const totalDaysSinceMarriage = calculateTimeSince(marriageDate).totalDays;
+            const totalDaysAway = visits.reduce((total, visit) => {
+                const start = new Date(visit.startDate);
+                const end = new Date(visit.endDate);
+                return total + Math.floor((end - start) / (1000 * 60 * 60 * 24));
+            }, 0);
+            const daysSpentTogether = totalDaysSinceMarriage - totalDaysAway;
+            document.getElementById('daysSpentTogether').innerText = `Days spent together: ${daysSpentTogether}`;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -186,21 +213,18 @@
                 const notes = document.getElementById('notes').value;
 
                 if (startDate && endDate) {
-                    // In a real application, you would send this data to a server
-                    // For now, we'll just add it to the table
-                    const visitsBody = document.getElementById('visitsBody');
-                    const row = document.createElement('tr');
-                    const duration = calculateTimeSince(startDate).totalDays;
-                    row.innerHTML = `
-                        <td>${startDate}</td>
-                        <td>${endDate}</td>
-                        <td>${duration} days</td>
-                        <td>${notes}</td>
-                    `;
-                    visitsBody.appendChild(row);
-
+                    visits.push({ startDate, endDate, notes });
+                    renderVisits();
                     $('#addVisitModal').modal('hide');
                     document.getElementById('addVisitForm').reset();
+                }
+            });
+
+            document.getElementById('visitsBody').addEventListener('click', function(e) {
+                if (e.target.classList.contains('delete-visit')) {
+                    const index = e.target.getAttribute('data-index');
+                    visits.splice(index, 1);
+                    renderVisits();
                 }
             });
         });
