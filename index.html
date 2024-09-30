@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-P6H4R6PN');</script>
-<!-- End Google Tag Manager -->
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-P6H4R6PN');</script>
+    <!-- End Google Tag Manager -->
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,10 +17,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <style>
         body {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f8f9fa;
+            padding: 2rem;
         }
         .counter-container {
             text-align: center;
@@ -28,39 +29,82 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        #visitsTable {
+            display: none;
         }
     </style>
 </head>
 <body>
     <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P6H4R6PN"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P6H4R6PN"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     
     <div class="counter-container">
         <h3>Married Since</h3>
-        <b></b><p id="counter"></p>
+        <b><p id="counter"></p>
         <p id="total-days"></p></b>
     </div>
-<br/>
-   
-<!--     <div>
-        <!-- Buttons -->
-    <button id="button-one">Button One</button>
-    <button id="button-two">Button Two</button>
-    <button id="button-three">Button Three</button>
-    <button id="button-four">Button Four</button>
 
-    <!-- Links -->
-    <a href="#" id="link-one">Link One</a>
-    <a href="#" id="link-two">Link Two</a>
-    </div> -->
+    <button id="toggleVisits" class="btn btn-primary mb-3">Show/Hide Visits</button>
+
+    <div id="visitsTable" class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody id="visitsBody">
+            </tbody>
+        </table>
+    </div>
+
+    <button id="addVisit" class="btn btn-success mt-3">Add New Visit</button>
+
+    <!-- Modal for adding new visit -->
+    <div class="modal fade" id="addVisitModal" tabindex="-1" role="dialog" aria-labelledby="addVisitModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addVisitModalLabel">Add New Visit</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addVisitForm">
+                        <div class="form-group">
+                            <label for="startDate">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea class="form-control" id="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveVisit">Save Visit</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
     <!-- Custom JavaScript -->
     <script>
         function calculateTimeSince(date) {
@@ -93,8 +137,73 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             totalDaysElement.innerText = `${timeSince.totalDays} days`;
         }
 
-        updateCounter();
-        setInterval(updateCounter, 1000 * 60); // Update every minute
+        function loadVisits() {
+            fetch('visits.json')
+                .then(response => response.json())
+                .then(data => {
+                    const visitsBody = document.getElementById('visitsBody');
+                    visitsBody.innerHTML = '';
+                    data.forEach(visit => {
+                        const row = document.createElement('tr');
+                        const duration = calculateTimeSince(visit.startDate).totalDays;
+                        row.innerHTML = `
+                            <td>${visit.startDate}</td>
+                            <td>${visit.endDate}</td>
+                            <td>${duration} days</td>
+                            <td>${visit.notes}</td>
+                        `;
+                        visitsBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading visits:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCounter();
+            setInterval(updateCounter, 1000 * 60); // Update every minute
+
+            const toggleVisitsBtn = document.getElementById('toggleVisits');
+            const visitsTable = document.getElementById('visitsTable');
+            toggleVisitsBtn.addEventListener('click', function() {
+                if (visitsTable.style.display === 'none') {
+                    visitsTable.style.display = 'block';
+                    loadVisits();
+                } else {
+                    visitsTable.style.display = 'none';
+                }
+            });
+
+            const addVisitBtn = document.getElementById('addVisit');
+            const saveVisitBtn = document.getElementById('saveVisit');
+            
+            addVisitBtn.addEventListener('click', function() {
+                $('#addVisitModal').modal('show');
+            });
+
+            saveVisitBtn.addEventListener('click', function() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const notes = document.getElementById('notes').value;
+
+                if (startDate && endDate) {
+                    // In a real application, you would send this data to a server
+                    // For now, we'll just add it to the table
+                    const visitsBody = document.getElementById('visitsBody');
+                    const row = document.createElement('tr');
+                    const duration = calculateTimeSince(startDate).totalDays;
+                    row.innerHTML = `
+                        <td>${startDate}</td>
+                        <td>${endDate}</td>
+                        <td>${duration} days</td>
+                        <td>${notes}</td>
+                    `;
+                    visitsBody.appendChild(row);
+
+                    $('#addVisitModal').modal('hide');
+                    document.getElementById('addVisitForm').reset();
+                }
+            });
+        });
     </script>
 </body>
 </html>
