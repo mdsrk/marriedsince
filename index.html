@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             background-color: #f8f9fa;
             padding: 2rem;
         }
+
         .counter-container {
             text-align: center;
             padding: 2rem;
@@ -23,17 +25,41 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
         }
+
         #visitsTable {
             display: none;
         }
+
+        .loader {
+            display: none;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
+
 <body>
     <div class="counter-container">
         <h3>Married Since</h3>
         <b><p id="counter"></p>
-        <p id="total-days"></p></b>
+            <p id="total-days"></p></b>
     </div>
+
+    <div class="loader" id="loader"></div>
 
     <button id="toggleVisits" class="btn btn-primary mb-3">Show/Hide Visits</button>
 
@@ -99,13 +125,29 @@
         let visits = [];
         const marriageDate = '2024-06-27';
 
-        // API URL and Key
-        const apiUrl = 'https://api.jsonbin.io/v3/b/66fa43e6acd3cb34a88ea799';
-        const apiKey = '$2a$10$mEsifU.lCG/Mn6LWgXrFbuBlzedG9Z/20HaINjamuXiIr0eZAAPD6';
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }).replace(/\//g, '-');
+        }
+
+        function calculateDuration(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const durationInMs = end - start;
+            const durationInDays = Math.floor(durationInMs / (1000 * 60 * 60 * 24));
+            return durationInDays + 1; // Including both start and end days
         }
 
         function calculateTimeSince(date) {
@@ -113,10 +155,8 @@
             const pastDate = new Date(date);
             const diffInMs = now - pastDate;
             const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
             const months = Math.floor(diffInDays / 30);
             const days = diffInDays % 30;
-
             let result = '';
             if (months > 0) {
                 result = `${months} month${months > 1 ? 's' : ''} ${days} day${days > 1 ? 's' : ''}`;
@@ -137,60 +177,37 @@
             totalDaysElement.innerText = `${timeSince.totalDays} days`;
         }
 
-        // Function to load visits from JSONBin
-        function loadVisitsFromJSONBin() {
-            let req = new XMLHttpRequest();
-            req.onreadystatechange = () => {
-                if (req.readyState === XMLHttpRequest.DONE) {
-                    if (req.status === 200) {
-                        try {
-                            const response = JSON.parse(req.responseText);
-                            if (response && response.record) {
-                                visits = response.record.visits || [];
-                                renderVisits();
-                            } else {
-                                console.error("No 'record' field in response:", response);
-                            }
-                        } catch (error) {
-                            console.error("Error parsing JSON response:", error);
-                        }
-                    } else {
-                        console.error(`Error ${req.status}: ${req.statusText}`);
+        async function loadVisitsFromJSONBin() {
+            showLoader();
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/<YOUR_BIN_ID>/latest', {
+                    headers: {
+                        'X-Master-Key': '<YOUR_API_KEY>'
                     }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    visits = data.record.visits;
+                    renderVisits();
+                } else {
+                    console.error('Error fetching data from JSONBin');
                 }
-            };
-            req.open("GET", apiUrl + "/latest", true);
-            req.setRequestHeader("X-Master-Key", apiKey);
-            req.send();
-        }
-
-        // Function to save visits to JSONBin
-        function saveVisitsToJSONBin() {
-            let req = new XMLHttpRequest();
-            req.onreadystatechange = () => {
-                if (req.readyState === XMLHttpRequest.DONE) {
-                    if (req.status !== 200) {
-                        console.error(`Error ${req.status}: ${req.statusText}`);
-                    }
-                }
-            };
-            req.open("PUT", apiUrl, true);
-            req.setRequestHeader("Content-Type", "application/json");
-            req.setRequestHeader("X-Master-Key", apiKey);
-            const data = JSON.stringify({ visits });
-            req.send(data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            hideLoader();
         }
 
         function renderVisits() {
             const visitsBody = document.getElementById('visitsBody');
             visitsBody.innerHTML = '';
             visits.forEach((visit, index) => {
+                const duration = calculateDuration(visit.startDate, visit.endDate);
                 const row = document.createElement('tr');
-                const duration = calculateTimeSince(visit.startDate).totalDays;
                 row.innerHTML = `
                     <td>${formatDate(visit.startDate)}</td>
                     <td>${formatDate(visit.endDate)}</td>
-                    <td>${duration} days</td>
+                    <td>${duration} day${duration > 1 ? 's' : ''}</td>
                     <td>${visit.notes}</td>
                     <td><button class="btn btn-danger btn-sm delete-visit" data-index="${index}">Delete</button></td>
                 `;
@@ -199,62 +216,75 @@
             updateDaysSpentTogether();
         }
 
+        async function saveVisitsToJSONBin() {
+            showLoader();
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/<YOUR_BIN_ID>', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': '<YOUR_API_KEY>'
+                    },
+                    body: JSON.stringify({ visits })
+                });
+                if (!response.ok) {
+                    console.error('Error saving data to JSONBin');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            hideLoader();
+        }
+
         function updateDaysSpentTogether() {
             const totalDaysSinceMarriage = calculateTimeSince(marriageDate).totalDays;
             const totalDaysAway = visits.reduce((total, visit) => {
                 const start = new Date(visit.startDate);
                 const end = new Date(visit.endDate);
-                return total + Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                return total + calculateDuration(visit.startDate, visit.endDate);
             }, 0);
             const daysSpentTogether = totalDaysSinceMarriage - totalDaysAway;
             document.getElementById('daysSpentTogether').innerText = `Days spent together: ${daysSpentTogether}`;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCounter();
-            setInterval(updateCounter, 1000 * 60); // Update every minute
+        document.getElementById('addVisit').addEventListener('click', () => {
+            $('#addVisitModal').modal('show');
+        });
 
-            const toggleVisitsBtn = document.getElementById('toggleVisits');
+        document.getElementById('saveVisit').addEventListener('click', () => {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const notes = document.getElementById('notes').value;
+
+            if (startDate && endDate && new Date(startDate) <= new Date(endDate)) {
+                visits.push({ startDate, endDate, notes });
+                renderVisits();
+                saveVisitsToJSONBin();
+                $('#addVisitModal').modal('hide');
+            } else {
+                alert('Invalid date range');
+            }
+        });
+
+        document.getElementById('toggleVisits').addEventListener('click', () => {
             const visitsTable = document.getElementById('visitsTable');
-            toggleVisitsBtn.addEventListener('click', function() {
-                if (visitsTable.style.display === 'none') {
-                    visitsTable.style.display = 'block';
-                    loadVisitsFromJSONBin();
-                } else {
-                    visitsTable.style.display = 'none';
-                }
-            });
+            visitsTable.style.display = visitsTable.style.display === 'none' ? 'block' : 'none';
+        });
 
-            const addVisitBtn = document.getElementById('addVisit');
-            const saveVisitBtn = document.getElementById('saveVisit');
-            addVisitBtn.addEventListener('click', function() {
-                $('#addVisitModal').modal('show');
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCounter();
+            loadVisitsFromJSONBin();
+        });
 
-            saveVisitBtn.addEventListener('click', function() {
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                const notes = document.getElementById('notes').value;
-
-                if (startDate && endDate) {
-                    visits.push({ startDate, endDate, notes });
-                    saveVisitsToJSONBin();
-                    $('#addVisitModal').modal('hide');
-                    renderVisits();
-                } else {
-                    alert('Please fill in all required fields.');
-                }
-            });
-
-            document.getElementById('visitsBody').addEventListener('click', function(event) {
-                if (event.target.classList.contains('delete-visit')) {
-                    const index = event.target.getAttribute('data-index');
-                    visits.splice(index, 1);
-                    saveVisitsToJSONBin();
-                    renderVisits();
-                }
-            });
+        document.getElementById('visitsBody').addEventListener('click', (event) => {
+            if (event.target.classList.contains('delete-visit')) {
+                const index = event.target.getAttribute('data-index');
+                visits.splice(index, 1);
+                renderVisits();
+                saveVisitsToJSONBin();
+            }
         });
     </script>
 </body>
+
 </html>
