@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Married Since - Visits Tracker</title>
+    <title>Married Since</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -29,7 +29,6 @@
     </style>
 </head>
 <body>
-
     <div class="counter-container">
         <h3>Married Since</h3>
         <b><p id="counter"></p>
@@ -95,13 +94,14 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
     <!-- Custom JavaScript -->
     <script>
-        const marriageDate = '2024-06-27';
         let visits = [];
-        const apiUrl = "https://api.jsonbin.io/v3/b/66fa41cbe41b4d34e43a7307";
-        const apiKey = "$2a$10$JYyw2jAOt.GPqVr1UoD97ebyz5ejpuLmkvMvrpXzg6xQuawpPiTsW";
+        const marriageDate = '2024-06-27';
+
+        // API URL and Key
+        const apiUrl = 'https://api.jsonbin.io/v3/b/66fa43e6acd3cb34a88ea799';
+        const apiKey = '$2a$10$mEsifU.lCG/Mn6LWgXrFbuBlzedG9Z/20HaINjamuXiIr0eZAAPD6';
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -113,10 +113,10 @@
             const pastDate = new Date(date);
             const diffInMs = now - pastDate;
             const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-            
+
             const months = Math.floor(diffInDays / 30);
             const days = diffInDays % 30;
-            
+
             let result = '';
             if (months > 0) {
                 result = `${months} month${months > 1 ? 's' : ''} ${days} day${days > 1 ? 's' : ''}`;
@@ -137,32 +137,48 @@
             totalDaysElement.innerText = `${timeSince.totalDays} days`;
         }
 
-        function saveVisitsToJSONBin() {
-            let req = new XMLHttpRequest();
-            req.onreadystatechange = () => {
-                if (req.readyState === XMLHttpRequest.DONE) {
-                    console.log('Data Saved:', req.responseText);
-                }
-            };
-            req.open("PUT", apiUrl, true);
-            req.setRequestHeader("Content-Type", "application/json");
-            req.setRequestHeader("X-Master-Key", apiKey);
-            req.send(JSON.stringify({ visits }));
-        }
-
+        // Function to load visits from JSONBin
         function loadVisitsFromJSONBin() {
             let req = new XMLHttpRequest();
             req.onreadystatechange = () => {
                 if (req.readyState === XMLHttpRequest.DONE) {
-                    const response = JSON.parse(req.responseText);
-                    visits = response.record.visits || [];
-                    renderVisits();
-                    console.log('Data Loaded:', visits);
+                    if (req.status === 200) {
+                        try {
+                            const response = JSON.parse(req.responseText);
+                            if (response && response.record) {
+                                visits = response.record.visits || [];
+                                renderVisits();
+                            } else {
+                                console.error("No 'record' field in response:", response);
+                            }
+                        } catch (error) {
+                            console.error("Error parsing JSON response:", error);
+                        }
+                    } else {
+                        console.error(`Error ${req.status}: ${req.statusText}`);
+                    }
                 }
             };
             req.open("GET", apiUrl + "/latest", true);
             req.setRequestHeader("X-Master-Key", apiKey);
             req.send();
+        }
+
+        // Function to save visits to JSONBin
+        function saveVisitsToJSONBin() {
+            let req = new XMLHttpRequest();
+            req.onreadystatechange = () => {
+                if (req.readyState === XMLHttpRequest.DONE) {
+                    if (req.status !== 200) {
+                        console.error(`Error ${req.status}: ${req.statusText}`);
+                    }
+                }
+            };
+            req.open("PUT", apiUrl, true);
+            req.setRequestHeader("Content-Type", "application/json");
+            req.setRequestHeader("X-Master-Key", apiKey);
+            const data = JSON.stringify({ visits });
+            req.send(data);
         }
 
         function renderVisits() {
@@ -211,7 +227,6 @@
 
             const addVisitBtn = document.getElementById('addVisit');
             const saveVisitBtn = document.getElementById('saveVisit');
-            
             addVisitBtn.addEventListener('click', function() {
                 $('#addVisitModal').modal('show');
             });
@@ -221,15 +236,19 @@
                 const endDate = document.getElementById('endDate').value;
                 const notes = document.getElementById('notes').value;
 
-                visits.push({ startDate, endDate, notes });
-                $('#addVisitModal').modal('hide');
-                saveVisitsToJSONBin();
-                renderVisits();
+                if (startDate && endDate) {
+                    visits.push({ startDate, endDate, notes });
+                    saveVisitsToJSONBin();
+                    $('#addVisitModal').modal('hide');
+                    renderVisits();
+                } else {
+                    alert('Please fill in all required fields.');
+                }
             });
 
-            document.getElementById('visitsBody').addEventListener('click', function(e) {
-                if (e.target.classList.contains('delete-visit')) {
-                    const index = e.target.getAttribute('data-index');
+            document.getElementById('visitsBody').addEventListener('click', function(event) {
+                if (event.target.classList.contains('delete-visit')) {
+                    const index = event.target.getAttribute('data-index');
                     visits.splice(index, 1);
                     saveVisitsToJSONBin();
                     renderVisits();
