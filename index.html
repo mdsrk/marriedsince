@@ -8,6 +8,20 @@
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        .fixed-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-size: 18px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .fixed-link:hover {
+            color: #007bff;
+        }
         body {
             display: flex;
             flex-direction: column;
@@ -49,14 +63,20 @@
                 transform: rotate(360deg);
             }
         }
+        .monthdays{
+            color: brown;
+            font-size: xx-large;
+        }
     </style>
 </head>
 
 <body>
     <div class="counter-container">
-        <h3>Married Since  ( 27 / June / 2024 - Thursday | 20-Dhu al-Hijjah-1445)</h3>
-        <b><p id="counter"></p>
-            <p id="total-days"></p></b>
+        <h3>Married Since</h3>
+            <span><i>( 27 / June / 2024 - Thursday | 20-Dhu al-Hijjah-1445)</i></span>
+        <br/><br/>
+            <b><p id="counter" class="monthdays"></p>
+            <p id="total-days" style="color: darkmagenta;font-size:x-large;"></p></b>
     </div>
 
     <div class="loader" id="loader"></div>
@@ -115,7 +135,7 @@
             </div>
         </div>
     </div>
-
+    <a href="shower.html" target="_blank" class="fixed-link">Skeeper</a>
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
