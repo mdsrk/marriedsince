@@ -17,6 +17,10 @@
         .table th, .table td {
             vertical-align: middle;
         }
+        .position-toggle {
+            cursor: pointer;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +117,7 @@
                             <th>Date</th>
                             <th>Time</th>
                             <th>Comment</th>
+                            <th>Position</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -123,7 +128,16 @@
                             <td>{{ entry.date }}</td>
                             <td>{{ entry.time }}</td>
                             <td>{{ entry.comment }}</td>
-                            <td><button class="btn btn-danger btn-sm" @click="deleteEntry(index)">Delete</button></td>
+                            <td>
+                                <span 
+                                    @click="togglePosition(index)" 
+                                    class="position-toggle">
+                                    {{ isPositionVisible(index) ? entry.position : '*' }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @click="deleteEntry(index)">Delete</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -153,7 +167,8 @@
                     position: ''
                 },
                 activities: [],
-                existingData: {} // Holds other data like 'test': 'test'
+                existingData: {},
+                visiblePositions: {} // To keep track of visible positions
             },
             methods: {
                 async addEntry() {
@@ -168,7 +183,7 @@
 
                     // Push the new entry locally
                     this.activities.push(newEntry);
-
+                    
                     // Reset form fields
                     this.resetForm();
 
@@ -221,40 +236,34 @@
                             },
                             body: JSON.stringify(updatedData)
                         });
+
                         if (!response.ok) {
-                            console.error('Error saving data:', response.status);
+                            throw new Error('Failed to save data');
                         }
                     } catch (error) {
                         console.error('Error saving data:', error);
                     }
                 },
-                deleteEntry(index) {
-                    this.activities.splice(index, 1);
-                    this.saveToJSONBin(); // Update the data on JSONBin
-                    this.updateChart(); // Update chart after deletion
-                },
                 updateChart() {
-                    const selfStimulateCount = this.activities.filter(a => a.activity === 'Self Stimulate').length;
-                    const showerCount = this.activities.filter(a => a.activity === 'Shower').length;
+                    const activityCounts = this.activities.reduce((acc, entry) => {
+                        acc[entry.activity] = (acc[entry.activity] || 0) + 1;
+                        return acc;
+                    }, {});
 
                     const ctx = document.getElementById('activityChart').getContext('2d');
-                    if (this.chart) {
-                        this.chart.destroy(); // Destroy previous chart if it exists
-                    }
-                    this.chart = new Chart(ctx, {
+                    const chart = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: ['Self Stimulate', 'Shower'],
+                            labels: Object.keys(activityCounts),
                             datasets: [{
-                                label: 'Activity Count',
-                                data: [selfStimulateCount, showerCount],
-                                backgroundColor: ['#3498db', '#e74c3c'],
-                                borderColor: ['#2980b9', '#c0392b'],
+                                label: 'Activities Count',
+                                data: Object.values(activityCounts),
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
                                 borderWidth: 1
                             }]
                         },
                         options: {
-                            responsive: true,
                             scales: {
                                 y: {
                                     beginAtZero: true
@@ -262,6 +271,18 @@
                             }
                         }
                     });
+                },
+                deleteEntry(index) {
+                    this.activities.splice(index, 1);
+                    this.saveToJSONBin(); // Update the JSONBin after deletion
+                },
+                togglePosition(index) {
+                    // Toggle visibility for the clicked position
+                    this.$set(this.visiblePositions, index, !this.visiblePositions[index]);
+                },
+                isPositionVisible(index) {
+                    // Return true if the position should be visible
+                    return this.visiblePositions[index] === true;
                 }
             },
             mounted() {
