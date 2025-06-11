@@ -1,1 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --success-color: #00b894;
+            --danger-color: #e17055;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 8px 32px rgba(108, 92, 231, 0.1);
+        }
 
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: none;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .app-container {
+            background: var(--light-bg);
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+
+        .swipe-container {
+            position: relative;
+            height: 400px;
+            max-width: 350px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            border: none;
+        }
+
+        .swipe-card:active {
+            cursor: grabbing;
+        }
+
+        .swipe-card.swiping-right {
+            border: 3px solid var(--success-color);
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            color: white;
+        }
+
+        .swipe-card.swiping-left {
+            border: 3px solid var(--danger-color);
+            background: linear-gradient(135deg, #e17055, #fd79a8);
+            color: white;
+        }
+
+        .card-content {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .swipe-actions {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #e17055, #fd79a8);
+            color: white;
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 10px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            backdrop-filter: blur(10px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .swipe-container {
+                height: 350px;
+                max-width: 300px;
+            }
+            
+            .card-content {
+                padding: 1.5rem;
+            }
+            
+            .action-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card login-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-graduation-cap fa-3x text-primary mb-4"></i>
+                            <h2 class="mb-4">Study Tracker</h2>
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="username" placeholder="Username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="app-container d-none">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-graduation-cap me-2"></i>Study Tracker
+                </a>
+                <button class="btn btn-outline-light" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+
+
+            <!-- Swipe Card -->
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">Swipe to Track Study Sessions</h3>
+                    <div class="swipe-container">
+                        <div class="swipe-card" id="swipeCard">
+                            <div class="card-content">
+                                <div class="card-title">Did you study today?</div>
+                                <p>Swipe right for <strong>STUDIED</strong></p>
+                                <p>Swipe left for <strong>NOT STUDIED</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swipe-actions">
+                        <button class="action-btn btn-reject d-none d-md-block" onclick="swipeLeft()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button class="action-btn btn-accept" onclick="swipeRight()">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Data Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="data-table">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Duration (hrs)</th>
+                                        <th>Status</th>
+                                        <th>Comment</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dataTableBody">
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Row - Moved to Bottom -->
+            <div class="row mt-4 mb-4">
+                <div class="col-12 d-flex justify-content-center">
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalCount">0</div>
+                        <div class="stats-label">Total Sessions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let visits = [];
+        let currentEditingIndex = -1;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data if logged in
+            if(localStorage.getItem('isLoggedIn') === 'true') {
+                showMainApp();
+                loadVisitsFromJSONBin();
+            }
+        });
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if(username === 'admin' && password === 'admin') {
+                localStorage.setItem('isLoggedIn', 'true');
+                showMainApp();
+                loadVisitsFromJSONBin();
+            } else {
+                alert('Invalid credentials. Use admin/admin');
+            }
+        });
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('d-none');
+            document.getElementById('mainApp').classList.remove('d-none');
+        }
+
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            document.getElementById('loginScreen').classList.remove('d-none');
+            document.getElementById('mainApp').classList.add('d-none');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // JSONBin API functions
+        async function loadVisitsFromJSONBin() {
+            showLoader();
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/6849188f8a456b7966ac1efd', {
+                    headers: {
+                        'X-Master-Key': '$2a$10$mEsifU.lCG/Mn6LWgXrFbuBlzedG9Z/20HaINjamuXiIr0eZAAPD6'
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    visits = data.record.visits || [];
+                    renderVisits();
+                    updateStats();
+                } else {
+                    console.error('Error fetching data from JSONBin');
+                    alert('Error loading data from server');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Connection error. Please check your internet connection.');
+            }
+            hideLoader();
+        }
+
+        async function saveVisitsToJSONBin() {
+            showLoader();
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/6849188f8a456b7966ac1efd', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': '$2a$10$mEsifU.lCG/Mn6LWgXrFbuBlzedG9Z/20HaINjamuXiIr0eZAAPD6'
+                    },
+                    body: JSON.stringify({ visits: visits })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to save data');
+                }
+            } catch (error) {
+                console.error('Error saving to JSONBin:', error);
+                alert('Error saving data to server');
+            }
+            hideLoader();
+        }
+
+        // Swipe functionality
+        let startX = 0;
+        let currentX = 0;
+        let cardBeingDragged = false;
+
+        const swipeCard = document.getElementById('swipeCard');
+
+        // Touch events
+        swipeCard.addEventListener('touchstart', handleStart, { passive: false });
+        swipeCard.addEventListener('touchmove', handleMove, { passive: false });
+        swipeCard.addEventListener('touchend', handleEnd, { passive: false });
+
+        // Mouse events
+        swipeCard.addEventListener('mousedown', handleStart);
+        swipeCard.addEventListener('mousemove', handleMove);
+        swipeCard.addEventListener('mouseup', handleEnd);
+        swipeCard.addEventListener('mouseleave', handleEnd);
+
+        function handleStart(e) {
+            e.preventDefault();
+            cardBeingDragged = true;
+            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            swipeCard.style.transition = 'none';
+        }
+
+        function handleMove(e) {
+            if (!cardBeingDragged) return;
+            e.preventDefault();
+            
+            currentX = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - startX;
+            const rotation = currentX * 0.1;
+            
+            swipeCard.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+            
+            // Visual feedback
+            swipeCard.classList.remove('swiping-left', 'swiping-right');
+            if (currentX > 50) {
+                swipeCard.classList.add('swiping-right');
+            } else if (currentX < -50) {
+                swipeCard.classList.add('swiping-left');
+            }
+        }
+
+        function handleEnd(e) {
+            if (!cardBeingDragged) return;
+            cardBeingDragged = false;
+            
+            swipeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            
+            if (currentX > 100) {
+                // Swipe right - STUDIED
+                completeSwipe('STUDIED');
+            } else if (currentX < -100) {
+                // Swipe left - NOT STUDIED
+                completeSwipe('NOT STUDIED');
+            } else {
+                // Snap back
+                swipeCard.style.transform = 'translateX(0) rotate(0deg)';
+                swipeCard.classList.remove('swiping-left', 'swiping-right');
+            }
+            
+            currentX = 0;
+        }
+
+        function swipeRight() {
+            completeSwipe('STUDIED');
+        }
+
+        function swipeLeft() {
+            completeSwipe('NOT STUDIED');
+        }
+
+        function completeSwipe(status) {
+            const direction = status === 'STUDIED' ? 'right' : 'left';
+            const translateX = direction === 'right' ? '100%' : '-100%';
+            
+            swipeCard.style.transform = `translateX(${translateX}) rotate(${direction === 'right' ? '30deg' : '-30deg'})`;
+            swipeCard.style.opacity = '0';
+            
+            setTimeout(() => {
+                addStudySession(status);
+                resetCard();
+            }, 300);
+        }
+
+        function resetCard() {
+            swipeCard.style.transition = 'none';
+            swipeCard.style.transform = 'translateX(0) rotate(0deg)';
+            swipeCard.style.opacity = '1';
+            swipeCard.classList.remove('swiping-left', 'swiping-right');
+            
+            setTimeout(() => {
+                swipeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            }, 50);
+        }
+
+        function addStudySession(status) {
+            const now = new Date();
+            const newVisit = {
+                id: Date.now(),
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().split(' ')[0].slice(0,5),
+                duration: status === 'STUDIED' ? 1 : 0,
+                status: status,
+                comment: status === 'STUDIED' ? 'Added via swipe - Studied' : 'Added via swipe - Not studied'
+            };
+            
+            visits.unshift(newVisit);
+            renderVisits();
+            updateStats();
+            saveVisitsToJSONBin();
+        }
+
+        // Form handling - Removed since Add New Entry Form is removed
+
+        function renderVisits() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            
+            visits.forEach((visit, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><input type="date" class="form-control form-control-sm" value="${visit.date}" onchange="updateVisit(${index}, 'date', this.value)"></td>
+                    <td><input type="time" class="form-control form-control-sm" value="${visit.time}" onchange="updateVisit(${index}, 'time', this.value)"></td>
+                    <td><input type="number" class="form-control form-control-sm" value="${visit.duration}" step="0.5" min="0" onchange="updateVisit(${index}, 'duration', parseFloat(this.value))"></td>
+                    <td>
+                        <select class="form-select form-select-sm" onchange="updateVisit(${index}, 'status', this.value)">
+                            <option value="STUDIED" ${visit.status === 'STUDIED' ? 'selected' : ''}>STUDIED</option>
+                            <option value="NOT STUDIED" ${visit.status === 'NOT STUDIED' ? 'selected' : ''}>NOT STUDIED</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="form-control form-control-sm" value="${visit.comment || ''}" onchange="updateVisit(${index}, 'comment', this.value)"></td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteVisit(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        function updateVisit(index, field, value) {
+            visits[index][field] = value;
+            updateStats();
+            saveVisitsToJSONBin();
+        }
+
+        function deleteVisit(index) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                visits.splice(index, 1);
+                renderVisits();
+                updateStats();
+                saveVisitsToJSONBin();
+            }
+        }
+
+        function updateStats() {
+            const total = visits.length;
+            document.getElementById('totalCount').textContent = total;
+        }
+
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
