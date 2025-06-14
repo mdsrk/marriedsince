@@ -7,75 +7,43 @@
   <h1>Advanced Beacon Active</h1>
 
   <script>
-    async function getLocalIPs() {
-      const ips = new Set();
-      try {
-        const pcs = new RTCPeerConnection({ iceServers: [] });
-        pcs.createDataChannel("");
-        pcs.createOffer().then(offer => pcs.setLocalDescription(offer));
-        pcs.onicecandidate = event => {
-          if (!event || !event.candidate) return;
-          event.candidate.candidate.split(' ').forEach(part => {
-            if (part.startsWith('candidate')) {
-              const ip = event.candidate.address || part;
-              ips.add(ip);
-            }
-          });
-        };
-        await new Promise(r => setTimeout(r, 1000));
-        pcs.close();
-      } catch {}
-      return Array.from(ips);
-    }
+(async () => {
+  const data = {
+    timestamp: new Date().toISOString(),
+    location: window.location.href,
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    platform: navigator.platform,
+    cookieEnabled: navigator.cookieEnabled,
+    javaEnabled: navigator.javaEnabled?.(),
+    screen: {
+      width: window.screen.width,
+      height: window.screen.height,
+      colorDepth: window.screen.colorDepth
+    },
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    referrer: document.referrer,
+    connection: navigator.connection ? {
+      downlink: navigator.connection.downlink,
+      effectiveType: navigator.connection.effectiveType,
+      rtt: navigator.connection.rtt
+    } : null
+  };
 
-    async function getBattery() {
-      return navigator.getBattery
-        ? await navigator.getBattery()
-        : null;
-    }
+  try {
+    await fetch('https://webhook.site/c175cdae-0096-45f5-81a3-8564f67ee5d1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+      mode: 'cors' // Important for GitHub Pages
+    });
+  } catch (err) {
+    console.error('Error sending data:', err);
+  }
+})();
+</script>
 
-    async function sendBeacon() {
-      const battery = await getBattery();
-      const localIPs = await getLocalIPs();
-
-      const payload = {
-        timestamp: new Date().toISOString(),
-        location: window.location.href,
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height
-        },
-        battery: battery
-          ? {
-              level: battery.level,
-              charging: battery.charging
-            }
-          : null,
-        memory: {
-          totalJSHeapSize: performance.memory?.totalJSHeapSize || null,
-          usedJSHeapSize: performance.memory?.usedJSHeapSize || null,
-        },
-        connection: {
-          effectiveType: navigator.connection?.effectiveType || null,
-          downlink: navigator.connection?.downlink || null
-        },
-        localIPs
-      };
-
-      fetch("https://webhook.site/c175cdae-0096-45f5-81a3-8564f67ee5d1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-      .then(r => console.log("Beacon sent", r.status))
-      .catch(e => console.error("Error sending beacon", e));
-
-      console.log("Beacon payload:", payload);
-    }
-
-    sendBeacon();
-  </script>
 </body>
 </html>
