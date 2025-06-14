@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Home Domain</title>
+</head>
+<body>
+  <h1>Welcome to My Home Domain</h1>
+  <p>This site sends a beacon to your control server.</p>
+
+  <script>
+    fetch("https://webhook.site/c175cdae-0096-45f5-81a3-8564f67ee5d1", {
+      method: "POST",
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        location: window.location.href,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height
+        }
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+  </script>
+</body>
+</html>
